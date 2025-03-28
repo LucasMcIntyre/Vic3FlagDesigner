@@ -1,7 +1,7 @@
 # Vic3 Flag Designer - Installation Guide  
 
 ## 📥 Download  
-[⬇ Click here to download the latest version](https://github.com/yourrepo/releases/latest)  
+[⬇ Click here to download the latest version](https://github.com/LucasMcIntyre/Vic3FlagDesigner/releases/latest)  
 
 ## 🛠 Installation Steps  
 1. **Download** the installer from the link above.  
