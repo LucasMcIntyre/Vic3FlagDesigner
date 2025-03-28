@@ -253,7 +253,7 @@ namespace Vic3FlagDesigner
         {
             OpenFileDialog openDialog = new OpenFileDialog
             {
-                Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp;*.gif;*.dds",
+                Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp;*.dds",
                 Multiselect = true
             };
 

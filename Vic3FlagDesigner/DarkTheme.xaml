@@ -1,0 +1,44 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Background and Foreground Brushes -->
+    <SolidColorBrush x:Key="WindowBackgroundColor" Color="#333333"/>
+    <SolidColorBrush x:Key="ControlBackgroundColor" Color="#444444"/>
+    <SolidColorBrush x:Key="ControlForegroundColor" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="ButtonBackgroundColor" Color="#555555"/>
+    <SolidColorBrush x:Key="ButtonForegroundColor" Color="#FFFFFF"/>
+
+    <!-- Window Style -->
+    <Style TargetType="Window">
+        <Setter Property="Background" Value="{StaticResource WindowBackgroundColor}"/>
+        <Setter Property="Foreground" Value="{StaticResource ControlForegroundColor}"/>
+    </Style>
+
+    <!-- TextBox Style -->
+    <Style TargetType="TextBox">
+        <Setter Property="Background" Value="{StaticResource ControlBackgroundColor}"/>
+        <Setter Property="Foreground" Value="{StaticResource ControlForegroundColor}"/>
+    </Style>
+
+    <!-- TextBlock Style -->
+    <Style TargetType="TextBlock">
+        <Setter Property="Background" Value="{StaticResource ControlBackgroundColor}"/>
+        <Setter Property="Foreground" Value="{StaticResource ControlForegroundColor}"/>
+    </Style>
+
+    <!-- Button Style -->
+    <Style TargetType="Button">
+        <Setter Property="Background" Value="{StaticResource ButtonBackgroundColor}"/>
+        <Setter Property="Foreground" Value="{StaticResource ButtonForegroundColor}"/>
+    </Style>
+
+    <!-- Slider Style -->
+    <Style TargetType="Slider">
+        <Setter Property="Foreground" Value="{StaticResource ControlForegroundColor}"/>
+    </Style>
+
+    <!-- ProgressBar Style -->
+    <Style TargetType="ProgressBar">
+        <Setter Property="Foreground" Value="{StaticResource ControlForegroundColor}"/>
+    </Style>
+</ResourceDictionary>

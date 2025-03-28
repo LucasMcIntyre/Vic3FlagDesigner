@@ -6,6 +6,16 @@
         Width="1080" Height="853"
         MinWidth="1080" MinHeight="800"
         Background="Gray">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary 
+                  Source="DarkTheme.xaml">
+                </ResourceDictionary>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
 
     <DockPanel>
         <!-- Menu Bar -->
@@ -114,4 +124,3 @@
         </Grid>
     </DockPanel>
 </Window>
-

@@ -19,9 +19,42 @@ namespace Vic3FlagDesigner
         private int _gridColumns;
         private string ImageType = string.Empty;
 
-        private Color selectedColorForColor1 = Colors.Red;      // Default replacement color
-        private Color selectedColorForColor2 = Colors.Yellow;
-        private Color selectedColorForColor3 = Colors.White;
+        private Color OriginalColor1 = Colors.Red;      // Default replacement color
+        private Color OriginalColor2 = Colors.Yellow;
+        private Color OriginalColor3 = Colors.White;
+
+        private Color? color1;
+        public Color? Color1
+        {
+            get => color1;
+            set
+            {
+                color1 = value;
+                OnPropertyChanged(nameof(Color1));
+            }
+        }
+
+        private Color? color2;
+        public Color? Color2
+        {
+            get => color2;
+            set
+            {
+                color2 = value;
+                OnPropertyChanged(nameof(Color2));
+            }
+        }
+
+        private Color? color3;
+        public Color? Color3
+        {
+            get => color3;
+            set
+            {
+                color3 = value;
+                OnPropertyChanged(nameof(Color3));
+            }
+        }
         public int GridColumns
         {
             get => _gridColumns;
@@ -47,9 +80,21 @@ namespace Vic3FlagDesigner
 
             if (string.Equals(ImageType, "emblem"))
             {
-                selectedColorForColor1 = ColorPicker1.SelectedColor ?? Color.FromRgb(0, 0, 128);
-                selectedColorForColor2 = ColorPicker2.SelectedColor ?? Color.FromRgb(0, 255, 128);
-                selectedColorForColor3 = ColorPicker3.SelectedColor ?? Color.FromRgb(255, 0, 128);
+                OriginalColor1 = Color.FromRgb(0, 0, 128);
+                OriginalColor2 = Color.FromRgb(0, 255, 128);
+                OriginalColor3 = Color.FromRgb(255, 0, 128);
+                color1 = Color.FromRgb(0, 0, 128);
+                color2 = Color.FromRgb(0, 255, 128);
+                color3 = Color.FromRgb(255, 0, 128);
+            }
+            else
+            {
+                OriginalColor1 = Colors.Red;
+                OriginalColor2 = Colors.Yellow;
+                OriginalColor3 = Colors.White;
+                color1 = Colors.Red;
+                color2 = Colors.Yellow;
+                color3 = Colors.White;
             }
         }
 
@@ -62,9 +107,9 @@ namespace Vic3FlagDesigner
         {
             if (SelectedImage != null)
             {
-                SelectedImage.Color1 = selectedColorForColor1;
-                SelectedImage.Color2 = selectedColorForColor2; 
-                SelectedImage.Color3 = selectedColorForColor3;
+                SelectedImage.Color1 = color1;
+                SelectedImage.Color2 = color2; 
+                SelectedImage.Color3 = color3;
                 if (string.Equals(ImageType, "emblem"))
                 {
                     SelectedImage.X = 384; SelectedImage.Y = 256; SelectedImage.IsEmblem = true;
@@ -97,18 +142,6 @@ namespace Vic3FlagDesigner
             ProcessingProgressBar.Visibility = Visibility.Visible;
             ProcessingProgressBar.Value = 0;
 
-            // Capture colors on UI thread before processing
-            var color1 = ColorPicker1.SelectedColor ?? Colors.Red;
-            var color2 = ColorPicker2.SelectedColor ?? Colors.Yellow;
-            var color3 = ColorPicker3.SelectedColor ?? Colors.White;
-
-            if (string.Equals(ImageType, "emblem"))
-            {
-                color1 = ColorPicker1.SelectedColor ?? Color.FromRgb(0, 0, 128);
-                color2 = ColorPicker2.SelectedColor ?? Color.FromRgb(0, 255, 128);
-                color3 = ColorPicker3.SelectedColor ?? Color.FromRgb(255, 0, 128);
-            }
-
             int totalImages = FolderImages.Count;
             int processedImages = 0;
 
@@ -120,7 +153,7 @@ namespace Vic3FlagDesigner
 
                 // Pass colors to processing method
                 var processedImage = await Task.Run(() =>
-                    ImageColorProcessor.ApplyColorReplacement(imageSource, color1, color2, color3, selectedColorForColor1, selectedColorForColor2, selectedColorForColor3));
+                    ImageColorProcessor.ApplyColorReplacement(imageSource, color1 ?? Colors.Red, color2 ?? Colors.Yellow, color3 ?? Colors.White, OriginalColor1, OriginalColor2, OriginalColor3));
 
                 FolderImages[currentIndex] = new ImageData { ImageSource = processedImage, ImagePath = ImageFilePath};
                 processedImages++;
@@ -131,11 +164,11 @@ namespace Vic3FlagDesigner
             ProcessingProgressBar.Visibility = Visibility.Collapsed;
 
             if (ColorPickerObj == ColorPicker1)
-                selectedColorForColor1 = ColorPicker1.SelectedColor ?? Colors.Red;
+                OriginalColor1 = ColorPicker1.SelectedColor ?? Colors.Red;
             else if (ColorPickerObj == ColorPicker2)
-                selectedColorForColor2 = ColorPicker2.SelectedColor ?? Colors.Yellow;
+                OriginalColor2 = ColorPicker2.SelectedColor ?? Colors.Yellow;
             else if (ColorPickerObj == ColorPicker3)
-                selectedColorForColor3 = ColorPicker3.SelectedColor ?? Colors.White;
+                OriginalColor3 = ColorPicker3.SelectedColor ?? Colors.White;
         }
     }
 }

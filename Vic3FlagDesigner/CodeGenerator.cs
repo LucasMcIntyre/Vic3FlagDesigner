@@ -96,7 +96,8 @@ namespace Vic3FlagDesigner
             {
                 string emblemType = image.IsEmblem ? "colored_emblem" : "textured_emblem";
                 sb.AppendLine($"\t{emblemType} = {{");
-                sb.AppendLine($"\t\ttexture = \"{Path.GetFileName(image.Path)}\"");
+                string texturePath = image.IsEmblem ? image.Path : Path.ChangeExtension(image.Path, ".dds");
+                sb.AppendLine($"\t\ttexture = \"{Path.GetFileName(texturePath)}\"");
 
                 if (image.IsEmblem)
                 {
@@ -111,7 +112,7 @@ namespace Vic3FlagDesigner
                 double scaleY = Math.Round(image.ScaleY, 4);
                 int rotation = NormalizeRotation(image.Rotation);
 
-                sb.AppendLine($"\t\tinstance = {{ position = {{ {positionX} {positionY} }}{(scaleX != 1.0 || scaleY != 1.0 ? $" scale = {{ {scaleX} {scaleY} }}" : "")}{(rotation != 0 ? $" rotation = {{ {rotation} }}" : "")} }}");
+                sb.AppendLine($"\t\tinstance = {{ position = {{ {positionX} {positionY} }}{(rotation != 0 ? $" rotation =  {rotation} " : "")}{(scaleX != 1.0 || scaleY != 1.0 ? $" scale = {{ {scaleX} {scaleY} }}" : "")} }}");
                 sb.AppendLine($"\t}}");
                 sb.AppendLine();
             }
@@ -119,8 +120,12 @@ namespace Vic3FlagDesigner
 
             try
             {
+                if (File.Exists(filePath))
+                {
+                    File.Delete(filePath);
+                }
                 File.AppendAllText(filePath, sb.ToString());
-                MessageBox.Show("Coat of Arms successfully generated.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                //MessageBox.Show("Coat of Arms successfully generated.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
@@ -188,6 +193,10 @@ namespace Vic3FlagDesigner
 
             try
             {
+                if (File.Exists(filePath))
+                {
+                    File.Delete(filePath);
+                }
                 File.AppendAllText(filePath, sb.ToString());
                 //MessageBox.Show("Flag definitions successfully generated.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }

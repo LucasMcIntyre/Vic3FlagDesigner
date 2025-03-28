@@ -5,16 +5,27 @@ VisualStudioVersion = 17.12.35707.178
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vic3FlagDesigner", "Vic3FlagDesigner\Vic3FlagDesigner.csproj", "{1918D2BC-6F83-4795-9500-2B18BE96FADF}"
 EndProject
+Project("{840C416C-B8F3-42BC-B0DD-F6BB14C9F8CB}") = "Vic3FlagDesigner_Setup", "Vic3FlagDesigner_Setup\Vic3FlagDesigner_Setup.aiproj", "{3B5D450B-40E8-4972-86AA-373C1F5FFAE8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		DefaultBuild|Any CPU = DefaultBuild|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{1918D2BC-6F83-4795-9500-2B18BE96FADF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1918D2BC-6F83-4795-9500-2B18BE96FADF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1918D2BC-6F83-4795-9500-2B18BE96FADF}.DefaultBuild|Any CPU.ActiveCfg = Debug|Any CPU
+		{1918D2BC-6F83-4795-9500-2B18BE96FADF}.DefaultBuild|Any CPU.Build.0 = Debug|Any CPU
 		{1918D2BC-6F83-4795-9500-2B18BE96FADF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1918D2BC-6F83-4795-9500-2B18BE96FADF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3B5D450B-40E8-4972-86AA-373C1F5FFAE8}.Debug|Any CPU.ActiveCfg = DefaultBuild
+		{3B5D450B-40E8-4972-86AA-373C1F5FFAE8}.Debug|Any CPU.Build.0 = DefaultBuild
+		{3B5D450B-40E8-4972-86AA-373C1F5FFAE8}.DefaultBuild|Any CPU.ActiveCfg = DefaultBuild
+		{3B5D450B-40E8-4972-86AA-373C1F5FFAE8}.DefaultBuild|Any CPU.Build.0 = DefaultBuild
+		{3B5D450B-40E8-4972-86AA-373C1F5FFAE8}.Release|Any CPU.ActiveCfg = DefaultBuild
+		{3B5D450B-40E8-4972-86AA-373C1F5FFAE8}.Release|Any CPU.Build.0 = DefaultBuild
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
