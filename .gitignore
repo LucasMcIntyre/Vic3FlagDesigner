@@ -361,3 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/Vic3FlagDesigner_Setup/Vic3FlagDesigner_Setup.aiproj
+/Vic3FlagDesigner_Setup/Vic3FlagDesigner_Setup.aip
+/Vic3FlagDesigner_Setup
