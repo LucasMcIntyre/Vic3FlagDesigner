@@ -1,5 +1,5 @@
 # Vic3 Flag Designer 
-#Features
+##Features
 Design and generate a flag for Victoria 3!
 1. Set the pattern of the flag as well as any supplemental emblems and images to overlay on top
 2. Use existing .dds files from vanilla game folders or make your own and add them to the designer
