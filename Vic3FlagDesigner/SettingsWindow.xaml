@@ -1,0 +1,34 @@
+﻿<Window x:Class="Vic3FlagDesigner.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Settings" Height="300" Width="440">
+    <Grid Margin="10">
+        <StackPanel>
+            <TextBlock Text="Default Pattern Folder:" />
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <TextBox x:Name="PatternFolderTextBox" Width="350"/>
+                <Button Content="Browse..." Click="BrowsePatternFolder"/>
+            </StackPanel>
+
+            <TextBlock Text="Default Emblem Folder:" />
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <TextBox x:Name="EmblemFolderTextBox" Width="350"/>
+                <Button Content="Browse..." Click="BrowseEmblemFolder"/>
+            </StackPanel>
+
+            <TextBlock Text="Default Texture Folder:" />
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <TextBox x:Name="TextureFolderTextBox" Width="350"/>
+                <Button Content="Browse..." Click="BrowseTextureFolder"/>
+            </StackPanel>
+
+            <TextBlock Text="Default Mod Folder:" />
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <TextBox x:Name="ModFolderTextBox" Width="350"/>
+                <Button Content="Browse..." Click="BrowseModFolder"/>
+            </StackPanel>
+
+            <Button Content="Save Settings" Click="SaveSettings" Margin="10"/>
+        </StackPanel>
+    </Grid>
+</Window>
