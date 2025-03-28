@@ -1,4 +1,14 @@
-# Vic3 Flag Designer - Installation Guide  
+# Vic3 Flag Designer 
+#Features
+Design and generate a flag for Victoria 3!
+1. Set the pattern of the flag as well as any supplemental emblems and images to overlay on top
+2. Use existing .dds files from vanilla game folders or make your own and add them to the designer
+3. Use any major image type for texture files and convert them to dds files on generation
+4. Change the size, position, and rotation of any image added to the canvas
+5. Save your progress in .Json files
+
+
+# Installation Guide  
 
 ## 📥 Download  
 [⬇ Click here to download the latest version](https://github.com/LucasMcIntyre/Vic3FlagDesigner/releases/latest)  
