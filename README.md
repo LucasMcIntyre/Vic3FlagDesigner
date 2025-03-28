@@ -11,7 +11,7 @@ Design and generate a flag for Victoria 3!
 # Installation Guide  
 
 ## 📥 Download  
-[⬇ Click here to download the latest version](https://github.com/LucasMcIntyre/Vic3FlagDesigner/releases/latest)  
+[⬇ Click here to download the latest version](https://github.com/Seleucas/Vic3FlagDesigner/releases/latest)  
 
 ## 🛠 Installation Steps  
 1. **Download** the installer from the link above.  
