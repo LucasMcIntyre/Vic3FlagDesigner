@@ -6,6 +6,7 @@ Design and generate a flag for Victoria 3!
 3. Use any major image type for texture files and convert them to dds files on generation
 4. Change the size, position, and rotation of any image added to the canvas
 5. Save your progress in .Json files
+6. Use emblem files of different sizes and automatically converts them to the proper size(CK3 Wink* Wink*)
 
 
 # Installation Guide  
