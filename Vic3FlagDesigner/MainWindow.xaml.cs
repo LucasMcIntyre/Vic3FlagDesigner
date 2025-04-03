@@ -28,7 +28,9 @@ namespace Vic3FlagDesigner
 
         private CancellationTokenSource? _cancellationTokenSource;
 
-        private const string SettingsFile = "settings.json";
+        private static readonly string SettingsFile = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "Vic3FlagDesigner", "settings.json");
         private SettingsData DesignerSettingsData;
 
         public MainWindow()

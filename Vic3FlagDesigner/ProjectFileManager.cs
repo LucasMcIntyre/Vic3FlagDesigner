@@ -86,21 +86,28 @@ namespace Vic3FlagDesigner
                 {
                     if (File.Exists(data.Path))
                     {
-                        loadedImages.Add(new ImageData
+                        try
                         {
-                            ImageSource = new BitmapImage(new Uri(data.Path)),
-                            OriginalImage = new BitmapImage(new Uri(data.Path)),
-                            X = data.X,
-                            Y = data.Y,
-                            ScaleX = data.ScaleX,
-                            ScaleY = data.ScaleY,
-                            Rotation = data.Rotation,
-                            IsEmblem = data.IsEmblem,
-                            Color1 = data.Color1,
-                            Color2 = data.Color2,
-                            Color3 = data.Color3,
-                            ImagePath = data.Path
-                        });
+                            loadedImages.Add(new ImageData
+                            {
+                                ImageSource = new BitmapImage(new Uri(data.Path)),
+                                OriginalImage = new BitmapImage(new Uri(data.Path)),
+                                X = data.X,
+                                Y = data.Y,
+                                ScaleX = data.ScaleX,
+                                ScaleY = data.ScaleY,
+                                Rotation = data.Rotation,
+                                IsEmblem = data.IsEmblem,
+                                Color1 = data.Color1,
+                                Color2 = data.Color2,
+                                Color3 = data.Color3,
+                                ImagePath = data.Path
+                            });
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show("Warning: \n" + data.Path +"\ncould not be loaded:" + ex.Message, "Image Load Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        }
                     }
                 }
 
