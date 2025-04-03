@@ -15,8 +15,10 @@ namespace Vic3FlagDesigner
     /// </summary>
     public partial class SettingsWindow : Window
     {
-        private const string SettingsFile = "settings.json";
         private SettingsData settings;
+        private static readonly string SettingsFilePath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "Vic3FlagDesigner", "settings.json");
 
         private MainWindow _mainWindow;
 
@@ -34,9 +36,9 @@ namespace Vic3FlagDesigner
 
         private void LoadSettings()
         {
-            if (File.Exists(SettingsFile))
+            if (File.Exists(SettingsFilePath))
             {
-                settings = JsonSerializer.Deserialize<SettingsData>(File.ReadAllText(SettingsFile));
+                settings = JsonSerializer.Deserialize<SettingsData>(File.ReadAllText(SettingsFilePath));
             }
             else
             {
@@ -56,11 +58,12 @@ namespace Vic3FlagDesigner
             settings.TextureFolder = TextureFolderTextBox.Text;
             settings.ModFolder = ModFolderTextBox.Text;
 
-            File.WriteAllText(SettingsFile, JsonSerializer.Serialize(settings, jsonOptions));
+            Directory.CreateDirectory(Path.GetDirectoryName(SettingsFilePath)); // Ensure folder exists
+            File.WriteAllText(SettingsFilePath, JsonSerializer.Serialize(settings, jsonOptions));
+
             _mainWindow.SetSettings();
             Close();
             System.Windows.MessageBox.Show("Settings saved successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-
         }
 
         private void BrowseFolder(System.Windows.Controls.TextBox textBox)

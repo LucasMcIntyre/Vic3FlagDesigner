@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Media.Effects;
 
 namespace Vic3FlagDesigner
 {
@@ -92,7 +93,7 @@ namespace Vic3FlagDesigner
             sb.AppendLine($"\tcolor3 = hsv360{{ {RgbToHsv(GlobalProjectData.BackgroundColor3)} }}");
             sb.AppendLine();
 
-            foreach (var image in GlobalProjectData.Images)
+            foreach (var image in Enumerable.Reverse(GlobalProjectData.Images))
             {
                 string emblemType = image.IsEmblem ? "colored_emblem" : "textured_emblem";
                 sb.AppendLine($"\t{emblemType} = {{");
@@ -110,7 +111,8 @@ namespace Vic3FlagDesigner
                 double positionY = Math.Round(image.Y / 512.0, 4);
                 double scaleX = Math.Round(image.ScaleX, 4);
                 double scaleY = Math.Round(image.ScaleY, 4);
-                int rotation = NormalizeRotation(image.Rotation);
+                // For code generation, we set rotation to 0 since we've baked the rotation into the image.
+                int rotation = 0;
 
                 sb.AppendLine($"\t\tinstance = {{ position = {{ {positionX} {positionY} }}{(rotation != 0 ? $" rotation =  {rotation} " : "")}{(scaleX != 1.0 || scaleY != 1.0 ? $" scale = {{ {scaleX} {scaleY} }}" : "")} }}");
                 sb.AppendLine($"\t}}");
@@ -168,7 +170,6 @@ namespace Vic3FlagDesigner
 
             return $"{Math.Round(h, 0)} {Math.Round(s, 0)} {Math.Round(v, 0)}";
         }
-
 
         private static void GenerateFlagDefinitions()
         {
@@ -248,7 +249,7 @@ namespace Vic3FlagDesigner
                         File.Copy(GlobalProjectData.BackgroundImagePath, destinationPath, true);
                     }
 
-                    // Copy other images
+                    // Process other images
                     foreach (var image in GlobalProjectData.Images)
                     {
                         if (File.Exists(image.Path))
@@ -257,18 +258,108 @@ namespace Vic3FlagDesigner
                                 ? Path.Combine(basePath, "gfx", "coat_of_arms", "colored_emblems")
                                 : Path.Combine(basePath, "gfx", "coat_of_arms", "textured_emblems");
 
-                            string destinationPath = Path.Combine(destinationFolder, Path.GetFileName(image.Path));
+                            // Determine the base filename and extension.
+                            string originalFileName = Path.GetFileNameWithoutExtension(image.Path);
+                            string extension = image.IsEmblem ? ".dds" : Path.GetExtension(image.Path);
+                            string destinationPath = Path.Combine(destinationFolder, originalFileName + extension);
 
-                            if (!image.IsEmblem && Path.GetExtension(image.Path).ToLower() != ".dds")
+                            if (image.IsEmblem)
                             {
-                                // Convert to DDS format
-                                string ddsPath = Path.ChangeExtension(destinationPath, ".dds");
-                                ConvertToDDS(image.Path, ddsPath);
-                                destinationPath = ddsPath;
+                                // Process emblem images.
+                                // Load the emblem image using ImageMagick via a helper method.
+                                // Here, we simulate loading by creating a BitmapImage from file.
+                                // Since we don't have a LoadDDS method defined here, we can use MagickImage directly.
+                                BitmapImage sourceImage;
+                                try
+                                {
+                                    using (MagickImage tempImage = new MagickImage(image.Path))
+                                    {
+                                        // Save the image temporarily to a memory stream and load it into BitmapImage.
+                                        using (MemoryStream ms = new MemoryStream())
+                                        {
+                                            tempImage.Format = MagickFormat.Png;
+                                            tempImage.Write(ms);
+                                            ms.Position = 0;
+                                            sourceImage = new BitmapImage();
+                                            sourceImage.BeginInit();
+                                            sourceImage.CacheOption = BitmapCacheOption.OnLoad;
+                                            sourceImage.StreamSource = ms;
+                                            sourceImage.EndInit();
+                                            sourceImage.Freeze();
+                                        }
+                                    }
+                                }
+                                catch
+                                {
+                                    continue;
+                                }
+
+                                string finalDdsPath = destinationPath;
+                                if (image.Rotation != 0)
+                                {
+                                    // New filename: original name + "_" + country tag + extension.
+                                    string newFileName = $"{originalFileName}_{GlobalProjectData.CountryTag}{extension}";
+                                    finalDdsPath = Path.Combine(destinationFolder, newFileName);
+
+                                    // Rotate the emblem and composite it onto a 768x512 canvas.
+                                    ConvertRotatedToDDS(image.Path, image.Rotation, finalDdsPath);
+                                }
+                                else
+                                {
+                                    // Simply copy the emblem.
+                                    File.Copy(image.Path, finalDdsPath, true);
+                                }
+
+                                // Reload the processed image.
+                                BitmapImage processedImage;
+                                try
+                                {
+                                    using (MagickImage tempImage = new MagickImage(finalDdsPath))
+                                    {
+                                        using (MemoryStream ms = new MemoryStream())
+                                        {
+                                            tempImage.Format = MagickFormat.Png;
+                                            tempImage.Write(ms);
+                                            ms.Position = 0;
+                                            processedImage = new BitmapImage();
+                                            processedImage.BeginInit();
+                                            processedImage.CacheOption = BitmapCacheOption.OnLoad;
+                                            processedImage.StreamSource = ms;
+                                            processedImage.EndInit();
+                                            processedImage.Freeze();
+                                        }
+                                    }
+                                }
+                                catch
+                                {
+                                    continue;
+                                }
+
+                                // If the processed emblem is smaller than 768x512, increase its canvas.
+                                if (processedImage.PixelWidth < 768 || processedImage.PixelHeight < 512)
+                                {
+                                    BitmapImage resizedImage = IncreaseCanvas(processedImage, 768, 512);
+                                    // Overwrite the DDS with the resized image.
+                                    ConvertBitmapImageToDDS(resizedImage, finalDdsPath);
+                                }
+
+                                // Update the image path to the final DDS file.
+                                image.Path = finalDdsPath;
                             }
                             else
                             {
-                                File.Copy(image.Path, destinationPath, true);
+                                // For non-emblem textures: if not DDS, convert them.
+                                if (Path.GetExtension(image.Path).ToLower() != ".dds")
+                                {
+                                    string ddsPath = Path.ChangeExtension(destinationPath, ".dds");
+                                    ConvertToDDS(image.Path, ddsPath);
+                                    image.Path = ddsPath;
+                                }
+                                else
+                                {
+                                    File.Copy(image.Path, destinationPath, true);
+                                    image.Path = destinationPath;
+                                }
                             }
                         }
                     }
@@ -279,6 +370,10 @@ namespace Vic3FlagDesigner
             }
         }
 
+        /// <summary>
+        /// Converts the given image to DDS format.
+        /// (Existing method)
+        /// </summary>
         private static void ConvertToDDS(string inputPath, string outputPath)
         {
             try
@@ -295,17 +390,102 @@ namespace Vic3FlagDesigner
             }
         }
 
-        public static int NormalizeRotation(double angle)
+        /// <summary>
+        /// Converts the given emblem image to DDS format after applying a rotation,
+        /// and composites it onto a 768x512 transparent canvas.
+        /// </summary>
+        private static void ConvertRotatedToDDS(string inputPath, double rotation, string outputPath)
         {
-            // Normalize the angle within the range -180 to 180
-            angle = Math.Round(angle); // Round to nearest integer
+            try
+            {
+                using (MagickImage emblem = new MagickImage(inputPath))
+                {
+                    emblem.BackgroundColor = MagickColors.Transparent;
+                    emblem.Alpha(AlphaOption.Set);
 
-            // Convert -180 to 180 range into 0 to 360
-            int normalizedAngle = (int)((angle + 360) % 360);
+                    // Rotate the emblem.
+                    emblem.Rotate(rotation);
 
-            return normalizedAngle;
+                    // Create a 768x512 canvas with a transparent background.
+                    using (MagickImage canvas = new MagickImage(MagickColors.Transparent, 768, 512))
+                    {
+                        // Composite the rotated emblem centered on the canvas.
+                        canvas.Composite(emblem, Gravity.Center, CompositeOperator.Over);
+                        canvas.Format = MagickFormat.Dds;
+                        canvas.Write(outputPath);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error converting rotated image {inputPath} to DDS: {ex.Message}");
+            }
         }
 
-    }
+        /// <summary>
+        /// Increases the canvas of the given image to targetWidth x targetHeight,
+        /// centering the original image on a transparent background.
+        /// </summary>
+        private static BitmapImage IncreaseCanvas(BitmapImage sourceImage, int targetWidth, int targetHeight)
+        {
+            DrawingVisual dv = new DrawingVisual();
+            using (DrawingContext dc = dv.RenderOpen())
+            {
+                // Draw a transparent background.
+                dc.DrawRectangle(Brushes.Transparent, null, new Rect(0, 0, targetWidth, targetHeight));
+                double x = (targetWidth - sourceImage.PixelWidth) / 2.0;
+                double y = (targetHeight - sourceImage.PixelHeight) / 2.0;
+                dc.DrawImage(sourceImage, new Rect(x, y, sourceImage.PixelWidth, sourceImage.PixelHeight));
+            }
+            RenderTargetBitmap rtb = new RenderTargetBitmap(targetWidth, targetHeight, 96, 96, PixelFormats.Pbgra32);
+            rtb.Render(dv);
 
+            PngBitmapEncoder encoder = new PngBitmapEncoder();
+            encoder.Frames.Add(BitmapFrame.Create(rtb));
+            using (var ms = new MemoryStream())
+            {
+                encoder.Save(ms);
+                ms.Position = 0;
+                BitmapImage bmp = new BitmapImage();
+                bmp.BeginInit();
+                bmp.CacheOption = BitmapCacheOption.OnLoad;
+                bmp.StreamSource = ms;
+                bmp.EndInit();
+                bmp.Freeze();
+                return bmp;
+            }
+        }
+
+        /// <summary>
+        /// Converts the given BitmapImage to DDS format and writes it to outputPath.
+        /// </summary>
+        private static void ConvertBitmapImageToDDS(BitmapImage bmp, string outputPath)
+        {
+            try
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    PngBitmapEncoder encoder = new PngBitmapEncoder();
+                    encoder.Frames.Add(BitmapFrame.Create(bmp));
+                    encoder.Save(ms);
+                    ms.Position = 0;
+                    using (MagickImage image = new MagickImage(ms))
+                    {
+                        image.Format = MagickFormat.Dds;
+                        image.Write(outputPath);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error converting BitmapImage to DDS: {ex.Message}");
+            }
+        }
+
+        public static int NormalizeRotation(double angle)
+        {
+            int roundedAngle = (int)Math.Round(angle);
+            return roundedAngle;
+        }
+    }
 }

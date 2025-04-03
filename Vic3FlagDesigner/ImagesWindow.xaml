@@ -2,6 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+        xmlns:local="clr-namespace:Vic3FlagDesigner"
         Title="Image Viewer" Height="600" MinWidth="242" Width="875">
 
     <DockPanel>
@@ -40,8 +41,19 @@
                     </ItemsPanelTemplate>
                 </ListBox.ItemsPanel>
                 <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <Image Source="{Binding ImageSource}" Width="192" Height="128" Margin="5"/>
+                    <DataTemplate DataType="{x:Type local:ImageData}">
+                        <Image Source="{Binding ImageSource}" Width="192" Height="128" Margin="5">
+                            <Image.Effect>
+                                <local:ColorReplaceEffect
+                                    SelectedColor1="{Binding BaseColor1, RelativeSource={RelativeSource AncestorType=Window}}"
+                                    NewColor1="{Binding Color1, RelativeSource={RelativeSource AncestorType=Window}}"
+                                    SelectedColor2="{Binding BaseColor2, RelativeSource={RelativeSource AncestorType=Window}}"
+                                    NewColor2="{Binding Color2, RelativeSource={RelativeSource AncestorType=Window}}"
+                                    SelectedColor3="{Binding BaseColor3, RelativeSource={RelativeSource AncestorType=Window}}"
+                                    NewColor3="{Binding Color3, RelativeSource={RelativeSource AncestorType=Window}}"
+                                    Tolerance="0.1"/>
+                            </Image.Effect>
+                        </Image>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>

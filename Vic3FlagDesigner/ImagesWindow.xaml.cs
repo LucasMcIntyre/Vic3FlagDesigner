@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -19,10 +18,29 @@ namespace Vic3FlagDesigner
         private int _gridColumns;
         private string ImageType = string.Empty;
 
-        private Color OriginalColor1 = Colors.Red;      // Default replacement color
-        private Color OriginalColor2 = Colors.Yellow;
-        private Color OriginalColor3 = Colors.White;
+        // New properties for the base/original colors present in the images.
+        private Color _baseColor1;
+        public Color BaseColor1
+        {
+            get => _baseColor1;
+            set { _baseColor1 = value; OnPropertyChanged(nameof(BaseColor1)); }
+        }
 
+        private Color _baseColor2;
+        public Color BaseColor2
+        {
+            get => _baseColor2;
+            set { _baseColor2 = value; OnPropertyChanged(nameof(BaseColor2)); }
+        }
+
+        private Color _baseColor3;
+        public Color BaseColor3
+        {
+            get => _baseColor3;
+            set { _baseColor3 = value; OnPropertyChanged(nameof(BaseColor3)); }
+        }
+
+        // These are the user-selected new colors.
         private Color? color1;
         public Color? Color1
         {
@@ -55,6 +73,7 @@ namespace Vic3FlagDesigner
                 OnPropertyChanged(nameof(Color3));
             }
         }
+
         public int GridColumns
         {
             get => _gridColumns;
@@ -78,23 +97,30 @@ namespace Vic3FlagDesigner
 
             this.SizeChanged += (s, e) => UpdateGridColumns(); // Update when resized
 
+            // Set initial base and new colors depending on image type.
             if (string.Equals(ImageType, "emblem"))
             {
-                OriginalColor1 = Color.FromRgb(0, 0, 128);
-                OriginalColor2 = Color.FromRgb(0, 255, 128);
-                OriginalColor3 = Color.FromRgb(255, 0, 128);
-                color1 = Color.FromRgb(0, 0, 128);
-                color2 = Color.FromRgb(0, 255, 128);
-                color3 = Color.FromRgb(255, 0, 128);
+                // For emblem, set base colors to one set (e.g., dark blue, bright green, pinkish)
+                BaseColor1 = Color.FromRgb(0, 0, 128);
+                BaseColor2 = Color.FromRgb(0, 255, 128);
+                BaseColor3 = Color.FromRgb(255, 0, 128);
+
+                // Initialize new colors to the same values (user can change these later)
+                Color1 = Color.FromRgb(0, 0, 128);
+                Color2 = Color.FromRgb(0, 255, 128);
+                Color3 = Color.FromRgb(255, 0, 128);
             }
             else
             {
-                OriginalColor1 = Colors.Red;
-                OriginalColor2 = Colors.Yellow;
-                OriginalColor3 = Colors.White;
-                color1 = Colors.Red;
-                color2 = Colors.Yellow;
-                color3 = Colors.White;
+                // For background images, set base colors to the defaults (red, yellow, white)
+                BaseColor1 = Colors.Red;
+                BaseColor2 = Colors.Yellow;
+                BaseColor3 = Colors.White;
+
+                // Initialize new colors to the same values (user can change these later)
+                Color1 = Colors.Red;
+                Color2 = Colors.Yellow;
+                Color3 = Colors.White;
             }
         }
 
@@ -107,19 +133,23 @@ namespace Vic3FlagDesigner
         {
             if (SelectedImage != null)
             {
-                SelectedImage.Color1 = color1;
-                SelectedImage.Color2 = color2; 
-                SelectedImage.Color3 = color3;
+                // Update the image's color properties so that when added to the main window,
+                // the shader effect could be bypassed for a final export if needed.
+                SelectedImage.Color1 = Color1;
+                SelectedImage.Color2 = Color2;
+                SelectedImage.Color3 = Color3;
                 if (string.Equals(ImageType, "emblem"))
                 {
-                    SelectedImage.X = 384; SelectedImage.Y = 256; SelectedImage.IsEmblem = true;
+                    SelectedImage.X = 384;
+                    SelectedImage.Y = 256;
+                    SelectedImage.IsEmblem = true;
                     _mainWindow.AddImageToMainWindow(SelectedImage);
                 }
                 else
                 {
                     _mainWindow.AddBackgroundImageToMainWindow(SelectedImage);
                 }
-                Close();
+                //Close();
             }
         }
 
@@ -129,46 +159,14 @@ namespace Vic3FlagDesigner
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
+        /// <summary>
+        /// When a color picker is closed, update its binding.
+        /// The shader effect in the DataTemplate (via XAML) binds to BaseColor and Color properties.
+        /// </summary>
         private void ColorPicker_Closed(object sender, RoutedEventArgs e)
         {
-            var colorPicker = (Xceed.Wpf.Toolkit.ColorPicker)sender;
-            colorPicker.GetBindingExpression(Xceed.Wpf.Toolkit.ColorPicker.SelectedColorProperty)?.UpdateSource();
-
-            ApplyColorReplacementToAllBackgrounds(sender);
-        }
-
-        private async void ApplyColorReplacementToAllBackgrounds(object ColorPickerObj)
-        {
-            ProcessingProgressBar.Visibility = Visibility.Visible;
-            ProcessingProgressBar.Value = 0;
-
-            int totalImages = FolderImages.Count;
-            int processedImages = 0;
-
-            for (int i = 0; i < totalImages; i++)
-            {
-                int currentIndex = i;
-                var imageSource = FolderImages[currentIndex].ImageSource;
-                string ImageFilePath = FolderImages[currentIndex].ImagePath;
-
-                // Pass colors to processing method
-                var processedImage = await Task.Run(() =>
-                    ImageColorProcessor.ApplyColorReplacement(imageSource, color1 ?? Colors.Red, color2 ?? Colors.Yellow, color3 ?? Colors.White, OriginalColor1, OriginalColor2, OriginalColor3));
-
-                FolderImages[currentIndex] = new ImageData { ImageSource = processedImage, ImagePath = ImageFilePath};
-                processedImages++;
-                ProcessingProgressBar.Value = (processedImages / (double)totalImages) * 100;
-            }
-
-            FolderImageList.Items.Refresh();
-            ProcessingProgressBar.Visibility = Visibility.Collapsed;
-
-            if (ColorPickerObj == ColorPicker1)
-                OriginalColor1 = ColorPicker1.SelectedColor ?? Colors.Red;
-            else if (ColorPickerObj == ColorPicker2)
-                OriginalColor2 = ColorPicker2.SelectedColor ?? Colors.Yellow;
-            else if (ColorPickerObj == ColorPicker3)
-                OriginalColor3 = ColorPicker3.SelectedColor ?? Colors.White;
+            var colorPicker = (ColorPicker)sender;
+            colorPicker.GetBindingExpression(ColorPicker.SelectedColorProperty)?.UpdateSource();
         }
     }
 }

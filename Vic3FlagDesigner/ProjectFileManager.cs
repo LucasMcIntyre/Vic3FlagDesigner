@@ -74,9 +74,11 @@ namespace Vic3FlagDesigner
                     backgroundImage = new ImageData
                     {
                         ImageSource = new BitmapImage(new Uri(saveData.BackgroundImagePath)),
+                        OriginalImage = new BitmapImage(new Uri(saveData.BackgroundImagePath)),
                         Color1 = saveData.BackgroundColor1,
                         Color2 = saveData.BackgroundColor2,
-                        Color3 = saveData.BackgroundColor3
+                        Color3 = saveData.BackgroundColor3,
+                        ImagePath = saveData.BackgroundImagePath
                     };
                 }
 
@@ -87,6 +89,7 @@ namespace Vic3FlagDesigner
                         loadedImages.Add(new ImageData
                         {
                             ImageSource = new BitmapImage(new Uri(data.Path)),
+                            OriginalImage = new BitmapImage(new Uri(data.Path)),
                             X = data.X,
                             Y = data.Y,
                             ScaleX = data.ScaleX,
@@ -95,7 +98,8 @@ namespace Vic3FlagDesigner
                             IsEmblem = data.IsEmblem,
                             Color1 = data.Color1,
                             Color2 = data.Color2,
-                            Color3 = data.Color3
+                            Color3 = data.Color3,
+                            ImagePath = data.Path
                         });
                     }
                 }
