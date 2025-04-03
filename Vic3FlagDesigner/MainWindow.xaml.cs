@@ -14,26 +14,23 @@ using System.Text.Json;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
 using Xceed.Wpf.Toolkit;
 using MessageBox = System.Windows.MessageBox;
+using System.Security.Principal;
 
 namespace Vic3FlagDesigner
 {
     public partial class MainWindow : Window
     {
         private Image? selectedAddonImage = null;
-
-        public ObservableCollection<ImageData> FolderImages { get; set; } = new();
         public ObservableCollection<ImageData> UserImages { get; set; } = new();
 
         private Image baseLayerImage; 
         private ImageData baseLayerData;
 
-        private Color BackgroundColor1 = Colors.Red;
-        private Color BackgroundColor2 = Colors.Yellow;
-        private Color BackgroundColor3 = Colors.White;
-
         private CancellationTokenSource? _cancellationTokenSource;
 
-        private const string SettingsFile = "settings.json";
+        private static readonly string SettingsFile = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "Vic3FlagDesigner", "settings.json");
         private SettingsData DesignerSettingsData;
 
         public MainWindow()
@@ -116,6 +113,7 @@ namespace Vic3FlagDesigner
                         var patternImage = new ImageData
                         {
                             ImageSource = LoadDDS(patternFilePath),
+                            OriginalImage = LoadDDS(patternFilePath),
                             ImagePath = patternFilePath
                         };
 
@@ -156,15 +154,71 @@ namespace Vic3FlagDesigner
                     return;
                 }
 
-                BitmapImage? image = LoadDDS(file);
-                if (image != null && image.PixelWidth == 768 && image.PixelHeight == 512)
+                BitmapImage image = LoadDDS(file);
+                // Accept images that are less than or equal to 768x512.
+                if (image != null && image.PixelWidth <= 768 && image.PixelHeight <= 512)
                 {
-                    Dispatcher.Invoke(() => images.Add(new ImageData { ImageSource = image, ImagePath = file, X=384, Y=256 }));
+                    BitmapImage finalImage;
+                    if (image.PixelWidth == 768 && image.PixelHeight == 512)
+                    {
+                        finalImage = image;
+                    }
+                    else
+                    {
+                        // Increase the canvas of the image to 768x512, keeping the image centered.
+                        finalImage = IncreaseCanvas(image, 768, 512);
+                    }
+
+                    Dispatcher.Invoke(() => images.Add(new ImageData
+                    {
+                        OriginalImage = image,
+                        ImageSource = finalImage,
+                        ImagePath = file,
+                        X = 384,
+                        Y = 256
+                    }));
                 }
 
                 Interlocked.Increment(ref processed);
                 Dispatcher.Invoke(() => loadingWindow.UpdateProgress(processed, total));
             });
+        }
+
+        private BitmapImage IncreaseCanvas(BitmapImage sourceImage, int targetWidth, int targetHeight)
+        {
+            // Create a DrawingVisual to perform the drawing.
+            DrawingVisual drawingVisual = new DrawingVisual();
+            using (DrawingContext context = drawingVisual.RenderOpen())
+            {
+                // Draw a transparent background.
+                context.DrawRectangle(Brushes.Transparent, null, new Rect(0, 0, targetWidth, targetHeight));
+
+                // Calculate the position to center the source image.
+                double x = (targetWidth - sourceImage.PixelWidth) / 2.0;
+                double y = (targetHeight - sourceImage.PixelHeight) / 2.0;
+                Rect imageRect = new Rect(x, y, sourceImage.PixelWidth, sourceImage.PixelHeight);
+                context.DrawImage(sourceImage, imageRect);
+            }
+
+            // Render the visual to a RenderTargetBitmap.
+            RenderTargetBitmap rtb = new RenderTargetBitmap(targetWidth, targetHeight, 96, 96, PixelFormats.Pbgra32);
+            rtb.Render(drawingVisual);
+
+            // Encode the RenderTargetBitmap into a BitmapImage.
+            PngBitmapEncoder encoder = new PngBitmapEncoder();
+            encoder.Frames.Add(BitmapFrame.Create(rtb));
+            using (var stream = new MemoryStream())
+            {
+                encoder.Save(stream);
+                stream.Position = 0;
+                BitmapImage bmpImage = new BitmapImage();
+                bmpImage.BeginInit();
+                bmpImage.CacheOption = BitmapCacheOption.OnLoad;
+                bmpImage.StreamSource = stream;
+                bmpImage.EndInit();
+                bmpImage.Freeze();
+                return bmpImage;
+            }
         }
 
         private BitmapImage LoadDDS(string filePath)
@@ -213,10 +267,13 @@ namespace Vic3FlagDesigner
         {
             if (image != null)
             {
+                image.ImageSource = ImageColorProcessor.ApplyColorReplacement(
+                    image.OriginalImage,
+                    image.Color1 ?? Colors.Red,
+                    image.Color2 ?? Colors.Yellow,
+                    image.Color3 ?? Colors.White,
+                    Colors.Red, Colors.Yellow, Colors.White);
                 SetBaseLayerImage(image);
-                BackgroundColor1 = image.Color1 ?? Colors.Red;
-                BackgroundColor2 = image.Color2 ?? Colors.Yellow;
-                BackgroundColor3 = image.Color3 ?? Colors.White;
             }
         }
 
@@ -224,8 +281,36 @@ namespace Vic3FlagDesigner
         {
             if (image != null)
             {
-                UserImages.Insert(0, image);
-                AddOverlayImage(image);
+                // Create a new instance so that this image is independent.
+                ImageData newImage = new ImageData
+                {
+                    // Create new BitmapImages from the file path.
+                    ImageSource = new BitmapImage(new Uri(image.ImagePath)),
+                    OriginalImage = new BitmapImage(new Uri(image.ImagePath)),
+                    X = image.X,
+                    Y = image.Y,
+                    ScaleX = image.ScaleX,
+                    ScaleY = image.ScaleY,
+                    Rotation = image.Rotation,
+                    ImagePath = image.ImagePath,
+                    Color1 = image.Color1,
+                    Color2 = image.Color2,
+                    Color3 = image.Color3,
+                    IsEmblem = image.IsEmblem
+                };
+
+                // Now apply color replacement using the unmodified original.
+                newImage.ImageSource = ImageColorProcessor.ApplyColorReplacement(
+                    newImage.OriginalImage,
+                    newImage.Color1 ?? Color.FromRgb(0, 0, 128),
+                    newImage.Color2 ?? Color.FromRgb(0, 255, 128),
+                    newImage.Color3 ?? Color.FromRgb(255, 0, 128),
+                    Color.FromRgb(0, 0, 128),
+                    Color.FromRgb(0, 255, 128),
+                    Color.FromRgb(255, 0, 128));
+
+                UserImages.Insert(0, newImage);
+                AddOverlayImage(newImage);
                 RebuildCanvasLayers();
             }
         }
@@ -337,6 +422,12 @@ namespace Vic3FlagDesigner
             SliderScaleX.Value = imageData.ScaleX;
             SliderScaleY.Value = imageData.ScaleY;
             SliderRotation.Value = imageData.Rotation;
+            TextBoxX.Text = ((int)imageData.X).ToString();
+            TextBoxY.Text = ((int)imageData.Y).ToString();
+            TextBoxScaleX.Text = ((double)imageData.ScaleX).ToString();
+            TextBoxScaleY.Text = ((double)imageData.ScaleY).ToString();
+            TextBoxRotation.Text = ((int)imageData.Rotation).ToString();
+
         }
 
         private void SliderX_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -349,6 +440,8 @@ namespace Vic3FlagDesigner
                     imageData.X = e.NewValue;
                     Canvas.SetLeft(selectedAddonImage, e.NewValue - (selectedAddonImage.Width / 2));
                 }
+                if (TextBoxX != null)
+                    TextBoxX.Text = ((int)SliderX.Value).ToString();
             }
         }
 
@@ -362,6 +455,8 @@ namespace Vic3FlagDesigner
                     imageData.Y = e.NewValue;
                     Canvas.SetTop(selectedAddonImage, e.NewValue - (selectedAddonImage.Height / 2));
                 }
+                if (TextBoxY != null)
+                    TextBoxY.Text = ((int)SliderY.Value).ToString();
             }
         }
 
@@ -375,6 +470,8 @@ namespace Vic3FlagDesigner
                     imageData.ScaleX = e.NewValue;
                     ApplyTransform(selectedAddonImage, imageData);
                 }
+                if (TextBoxScaleX != null)
+                    TextBoxScaleX.Text = SliderScaleX.Value.ToString("0.00");
             }
         }
 
@@ -388,6 +485,8 @@ namespace Vic3FlagDesigner
                     imageData.ScaleY = e.NewValue;
                     ApplyTransform(selectedAddonImage, imageData);
                 }
+                if (TextBoxScaleY != null)
+                    TextBoxScaleY.Text = SliderScaleY.Value.ToString("0.00");
             }
         }
 
@@ -401,6 +500,48 @@ namespace Vic3FlagDesigner
                     imageData.Rotation = e.NewValue;
                     ApplyTransform(selectedAddonImage, imageData);
                 }
+                if (TextBoxRotation != null)
+                    TextBoxRotation.Text = ((int)SliderRotation.Value).ToString();
+            }
+        }
+
+        private void TextBoxX_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (int.TryParse(TextBoxX.Text, out int value))
+            {
+                SliderX.Value = Math.Clamp(value, (int)SliderX.Minimum, (int)SliderX.Maximum);
+            }
+        }
+
+        private void TextBoxY_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (int.TryParse(TextBoxY.Text, out int value))
+            {
+                SliderY.Value = Math.Clamp(value, (int)SliderY.Minimum, (int)SliderY.Maximum);
+            }
+        }
+
+        private void TextBoxScaleX_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (double.TryParse(TextBoxScaleX.Text, out double value))
+            {
+                SliderScaleX.Value = Math.Clamp(value, SliderScaleX.Minimum, SliderScaleX.Maximum);
+            }
+        }
+
+        private void TextBoxScaleY_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (double.TryParse(TextBoxScaleY.Text, out double value))
+            {
+                SliderScaleY.Value = Math.Clamp(value, SliderScaleY.Minimum, SliderScaleY.Maximum);
+            }
+        }
+
+        private void TextBoxRotation_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (int.TryParse(TextBoxRotation.Text, out int value))
+            {
+                SliderRotation.Value = Math.Clamp(value, (int)SliderRotation.Minimum, (int)SliderRotation.Maximum);
             }
         }
 
@@ -430,12 +571,13 @@ namespace Vic3FlagDesigner
                 ImageCanvas.Children.Add(baseLayerImage);
             }
 
-            // Add overlay images while keeping their saved positions and scales
-            foreach (var imageData in UserImages)
+            // Add overlay images in reverse order so that the first image is on top
+            foreach (var imageData in UserImages.Reverse())
             {
                 AddOverlayImage(imageData);
             }
         }
+
 
 
         private void AddOverlayImage(ImageData imageData)
@@ -476,6 +618,11 @@ namespace Vic3FlagDesigner
 
         private void Generate_Click(object sender, RoutedEventArgs e)
         {
+            if (!IsRunningAsAdmin())
+            {
+                MessageBox.Show("Warning: The code generation can require Administrator privileges depending on the mod folder selected.  If files don't generate, please restart in Admin Mode or pick a new folder.",
+                                "Administrator Required", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
             OpenFileDialog openDialog = new OpenFileDialog
             {
                 Filter = "Project Files (*.json)|*.json"
@@ -511,10 +658,6 @@ namespace Vic3FlagDesigner
 
                 if (saveDialog.ShowDialog() == true)
                 {
-                    baseLayerData.Color1 = BackgroundColor1;
-                    baseLayerData.Color2 = BackgroundColor2;
-                    baseLayerData.Color3 = BackgroundColor3;
-
                     // Pass country tag and name when saving
                     ProjectFileManager.SaveProject(saveDialog.FileName, new List<ImageData>(UserImages), baseLayerData,
                         CountryTagTextBox.Text, CountryNameTextBox.Text);
@@ -546,11 +689,6 @@ namespace Vic3FlagDesigner
                 {
                     backgroundImage.ImageSource = ImageColorProcessor.ApplyColorReplacement(backgroundImage.ImageSource, backgroundImage.Color1?? Colors.Red, backgroundImage.Color2 ?? Colors.Yellow, backgroundImage.Color3 ?? Colors.White, Colors.Red, Colors.Yellow, Colors.White);
                     SetBaseLayerImage(backgroundImage);
-                    bool alreadyExists = FolderImages.Any(img => img.ImageSource?.UriSource == backgroundImage.ImageSource?.UriSource);
-                    if (!alreadyExists)
-                    {
-                        FolderImages.Insert(0, backgroundImage);
-                    }
                 }
                 else
                 {
@@ -616,21 +754,68 @@ namespace Vic3FlagDesigner
                 RebuildCanvasLayers();
             }
         }
+
+        private void CopyImage_Click(object sender, RoutedEventArgs e)
+        {
+            int selectedIndex = UserImageList.SelectedIndex;
+            if (selectedIndex >= 0 && selectedIndex < UserImages.Count)
+            {
+                ImageData selectedImage = UserImages[selectedIndex];
+                ImageData copiedImage = CloneImageData(selectedImage);
+                UserImages.Insert(selectedIndex, copiedImage);
+                RebuildCanvasLayers();
+            }
+        }
+        private ImageData CloneImageData(ImageData original)
+        {
+            ImageData ClonedImage = new ImageData
+            {
+                // Create a new BitmapImage instance using the original file path.
+                // This ensures that the cloned image does not share the same reference.
+                ImageSource = new BitmapImage(new Uri(original.ImagePath)),
+                OriginalImage = new BitmapImage(new Uri(original.ImagePath)),
+                X = original.X,
+                Y = original.Y,
+                ScaleX = original.ScaleX,
+                ScaleY = original.ScaleY,
+                Rotation = original.Rotation,
+                ImagePath = original.ImagePath,
+                Color1 = original.Color1,
+                Color2 = original.Color2,
+                Color3 = original.Color3,
+                IsEmblem = original.IsEmblem
+            };
+            if (ClonedImage.IsEmblem)
+                ClonedImage.ImageSource = ImageColorProcessor.ApplyColorReplacement(ClonedImage.ImageSource, ClonedImage.Color1 ?? Color.FromRgb(0, 0, 128), ClonedImage.Color2 ?? Color.FromRgb(0, 255, 128), ClonedImage.Color3 ?? Color.FromRgb(255, 0, 128), Color.FromRgb(0, 0, 128), Color.FromRgb(0, 255, 128), Color.FromRgb(255, 0, 128));
+            return ClonedImage;
+        }
+
+        public static bool IsRunningAsAdmin()
+        {
+            using (WindowsIdentity identity = WindowsIdentity.GetCurrent())
+            {
+                WindowsPrincipal principal = new WindowsPrincipal(identity);
+                return principal.IsInRole(WindowsBuiltInRole.Administrator);
+            }
+        }
     }
 
     public class ImageData
     {
-        public BitmapImage? ImageSource { get; set; }
+        public BitmapImage? OriginalImage { get; set; }  // Unmodified image
+        public BitmapImage? ImageSource { get; set; }      // Processed image (or same as original if not processed)
         public double X { get; set; } = 0;
         public double Y { get; set; } = 0;
         public double ScaleX { get; set; } = 1.0;
         public double ScaleY { get; set; } = 1.0;
-        public double Rotation { get; set; } = 0.0; // Default rotation
+        public double Rotation { get; set; } = 0.0;
         public string ImagePath { get; set; }
         public Color? Color1 { get; set; }
         public Color? Color2 { get; set; }
         public Color? Color3 { get; set; }
         public bool IsEmblem { get; set; } = false;
     }
+
+
 
 }

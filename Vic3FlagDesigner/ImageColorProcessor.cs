@@ -41,12 +41,15 @@ namespace Vic3FlagDesigner
                     PngBitmapEncoder encoder = new PngBitmapEncoder();
                     encoder.Frames.Add(BitmapFrame.Create(writeableBitmap));
                     encoder.Save(stream);
-                    stream.Position = 0;
+
+                    // Convert the stream to a byte array, then create a new MemoryStream.
+                    byte[] imageData = stream.ToArray();
 
                     BitmapImage bitmap = new BitmapImage();
                     bitmap.BeginInit();
+                    // Remove direct caching options from the original stream and create a new stream from the byte array
                     bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                    bitmap.StreamSource = stream;
+                    bitmap.StreamSource = new MemoryStream(imageData);
                     bitmap.EndInit();
                     bitmap.Freeze();
 
@@ -105,4 +108,3 @@ namespace Vic3FlagDesigner
         }
     }
 }
-

@@ -3,8 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         Title="Vic 3 Flag Designer"
-        Width="1080" Height="853"
-        MinWidth="1080" MinHeight="800"
+        Width="1080" Height="920"
+        MinWidth="1080" MinHeight="920"
         Background="Gray">
     <Window.Resources>
         <ResourceDictionary>
@@ -55,41 +55,92 @@
                     <Canvas x:Name="ImageCanvas"
                             Width="768"
                             Height="512"
-                            Background="LightGray" Margin="0,-80,0,147">
+                            Background="LightGray" Margin="0,-130,0,147">
                         <Canvas.Clip>
                             <RectangleGeometry Rect="0,0,768,512"/>
                         </Canvas.Clip>
                     </Canvas>
                 </Grid>
 
-                <!-- Position Controls (Sliders) -->
+                <!-- Position Controls (Sliders + TextBoxes) -->
                 <StackPanel VerticalAlignment="Bottom" Margin="10">
-                    <TextBlock Text="X Position" Margin="5"/>
+                    <!-- X Position -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="X Position" Grid.Column="0" Margin="5" VerticalAlignment="Center"/>
+                        <TextBox x:Name="TextBoxX" Width="50" Grid.Column="1" Margin="5" 
+                 HorizontalAlignment="Right" TextChanged="TextBoxX_TextChanged"/>
+                    </Grid>
                     <Slider x:Name="SliderX" Minimum="0" Maximum="768" Value="384"
-                    SmallChange="1" LargeChange="10" TickFrequency="1" IsSnapToTickEnabled="False"
-                    ValueChanged="SliderX_ValueChanged"/>
+            SmallChange="1" LargeChange="10" TickFrequency="1" 
+            IsSnapToTickEnabled="False" Margin="5"
+            ValueChanged="SliderX_ValueChanged"/>
 
-                    <TextBlock Text="Y Position" Margin="5"/>
+                    <!-- Y Position -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Y Position" Grid.Column="0" Margin="5" VerticalAlignment="Center"/>
+                        <TextBox x:Name="TextBoxY" Width="50" Grid.Column="1" Margin="5" 
+                 HorizontalAlignment="Right" TextChanged="TextBoxY_TextChanged"/>
+                    </Grid>
                     <Slider x:Name="SliderY" Minimum="0" Maximum="512" Value="256"
-                    SmallChange="1" LargeChange="10" TickFrequency="1" IsSnapToTickEnabled="False"
-                    ValueChanged="SliderY_ValueChanged"/>
+            SmallChange="1" LargeChange="10" TickFrequency="1" 
+            IsSnapToTickEnabled="False" Margin="5"
+            ValueChanged="SliderY_ValueChanged"/>
 
-                    <!-- New Scale Sliders -->
-                    <TextBlock Text="Scale X" Margin="5"/>
+                    <!-- Scale X -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Scale X" Grid.Column="0" Margin="5" VerticalAlignment="Center"/>
+                        <TextBox x:Name="TextBoxScaleX" Width="50" Grid.Column="1" Margin="5" 
+                 HorizontalAlignment="Right" TextChanged="TextBoxScaleX_TextChanged"/>
+                    </Grid>
                     <Slider x:Name="SliderScaleX" Minimum="0.01" Maximum="2" Value="1.00"
-                    SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01" IsSnapToTickEnabled="False"
-                    ValueChanged="SliderScaleX_ValueChanged"/>
+            SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01" 
+            IsSnapToTickEnabled="False" Margin="5"
+            ValueChanged="SliderScaleX_ValueChanged"/>
 
-                    <TextBlock Text="Scale Y" Margin="5"/>
+                    <!-- Scale Y -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Scale Y" Grid.Column="0" Margin="5" VerticalAlignment="Center"/>
+                        <TextBox x:Name="TextBoxScaleY" Width="50" Grid.Column="1" Margin="5" 
+                 HorizontalAlignment="Right" TextChanged="TextBoxScaleY_TextChanged"/>
+                    </Grid>
                     <Slider x:Name="SliderScaleY" Minimum="0.01" Maximum="2" Value="1.00"
-                    SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01" IsSnapToTickEnabled="False"
-                    ValueChanged="SliderScaleY_ValueChanged"/>
+            SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01" 
+            IsSnapToTickEnabled="False" Margin="5"
+            ValueChanged="SliderScaleY_ValueChanged"/>
 
-                    <TextBlock Text="Rotation" Margin="5"/>
+                    <!-- Rotation -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Rotation" Grid.Column="0" Margin="5" VerticalAlignment="Center"/>
+                        <TextBox x:Name="TextBoxRotation" Width="50" Grid.Column="1" Margin="5" 
+                 HorizontalAlignment="Right" TextChanged="TextBoxRotation_TextChanged"/>
+                    </Grid>
                     <Slider x:Name="SliderRotation" Minimum="-180" Maximum="180" Value="0"
-                    SmallChange="1" LargeChange="10" TickFrequency="1" IsSnapToTickEnabled="False"
-                    ValueChanged="SliderRotation_ValueChanged"/>
+            SmallChange="1" LargeChange="10" TickFrequency="1" 
+            IsSnapToTickEnabled="False" Margin="5"
+            ValueChanged="SliderRotation_ValueChanged"/>
                 </StackPanel>
+
+
             </Grid>
 
             <!-- Right Panel: User-Added Image List -->
@@ -118,6 +169,8 @@
                         <Button Content="▲" Click="MoveUp_Click" Width="40"/>
                         <Button Content="▼" Click="MoveDown_Click" Width="40"/>
                         <Button Content="❌" Click="DeleteImage_Click" Width="40"/>
+                        <Button Content="⧉" Click="CopyImage_Click" Width="40"/>
+                        <!-- New Copy Button -->
                     </StackPanel>
                 </Grid>
             </Border>
